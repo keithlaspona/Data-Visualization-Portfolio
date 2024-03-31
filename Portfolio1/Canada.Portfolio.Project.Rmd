@@ -1,0 +1,253 @@
+---
+title: |
+  | DS221
+  | Data Visualization and Storytelling
+subtitle: |
+  | --------------------------------------------------
+  | PORTFOLIO 1
+  | --------------------------------------------------
+output: pdf_document
+header-includes:
+  - "\\usepackage{titling}"
+  - "\\pretitle{\\begin{center}\\LARGE\\includegraphics[width=4cm]{logo.jpg}\\\\[\\bigskipamount]}"
+  - "\\posttitle{\\end{center}}"
+editor_options: 
+  markdown: 
+---
+
+```{r}
+
+install.packages("sf", dependencies=TRUE)
+install.packages("tmap", dependencies=TRUE)
+install.packages("mapview", dependencies=TRUE)
+install.packages("stars", dependencies=TRUE)
+install.packages("rayshader", dependencies=TRUE)
+install.packages("MetBrewer", dependencies=TRUE)
+install.packages("rayrender")
+install.packages("extrafont", dependencies=TRUE)
+install.packages("magick", dependencies=TRUE)
+
+```
+
+```{r}
+options(rgl.useNULL = FALSE)
+
+require(tidyverse)
+require(sf)
+require(tmap)
+require(ggplot2)
+require(mapview)
+require(stars)
+require(rayshader)
+require(MetBrewer)
+require(colorspace)
+require(rayrender)
+require(magick)
+require(extrafont)
+```
+
+```{r}
+library(sf)
+
+# Load the population data and administrative boundaries
+ca_hex <- st_read("packages/kontur_population_CA_20231101.gpkg") %>% st_transform(3106)
+ca_admin <- st_read("packages/kontur_boundaries_CA_20230628.gpkg") %>% st_transform(3106)
+```
+
+```{r}
+distinct_names <- ca_admin %>% distinct(name_en)
+print(distinct_names)
+```
+
+```{r}
+# Creating BD Boundary
+ca_boundary <- ca_admin %>%
+  st_geometry %>%
+  st_union %>%
+  st_sf %>%
+  st_make_valid()
+```
+
+```{r}
+ca_boundary %>%
+  ggplot()+
+  geom_sf()
+cnd_hex <- st_intersection(ca_hex, ca_boundary) %>%
+  st_transform(crs = 3106)
+```
+
+```{r}
+ggplot(is_hex)+
+  geom_sf(aes(fill = population),
+          color = "grey66",
+          linewidth = 0)
+
+geom_sf(
+  data = ca_boundary,
+  fill = NA,
+  color = "black",
+  linetype = "dashed",
+  linewidth = 1
+)
+```
+
+```{r}
+names(ca_hex)
+```
+
+
+```{r}
+ggplot(ca_hex) + 
+  geom_sf(aes(fill = population), color = "gray66", linewidth = 0) + 
+  geom_sf(data = ca_boundary, fill = NA, color = "black")
+```
+
+```{r}
+# setting the ph boundary as a bounding box
+bbox <- st_bbox(ca_boundary)
+
+# finding the aspect ratio
+bottom_left <- st_point(c(bbox[["xmin"]], bbox[["ymin"]])) %>%
+  st_sfc(crs = 3106)
+bottom_right <- st_point(c(bbox[["xmax"]], bbox[["ymin"]])) %>%
+  st_sfc(crs = 3106)
+top_left <- st_point(c(bbox[["xmin"]], bbox[["ymax"]])) %>%
+  st_sfc(crs = 3106)
+top_right <- st_point(c(bbox[["xmin"]], bbox[["ymax"]])) %>%
+  st_sfc(crs = 3106)
+
+width <- st_distance(bottom_left, bottom_right)
+height <- st_distance(bottom_left, top_left)
+
+if(width > height) {
+  w_ratio = 1
+  h_ratio = height / width
+} else {
+  h_ratio = 1.1
+  w_ratio = width / height
+}
+```
+
+```{r}
+# convert to raster to convert to matrix
+size = 1000 * 3.5
+
+pop_raster <- st_rasterize(
+  ca_hex,
+  nx = floor(size * w_ratio) %>% as.numeric(),
+  ny = floor(size * h_ratio) %>% as.numeric()
+)
+
+pop_matrix <- matrix(pop_raster$population,
+                     nrow = floor(size * w_ratio),
+                     ncol = floor(size * h_ratio))
+```
+
+```{r}
+# Create color palette from MetBrewer Library
+color <- MetBrewer::met.brewer(name="Peru2", direction = -1)
+
+tx <- grDevices::colorRampPalette(color, bias = 4.5)(256)
+swatchplot(tx)
+swatchplot(color)
+```
+
+```{r}
+# Close any existing 3D plot before plotting another
+rgl::close3d()
+
+pop_matrix %>%
+  height_shade(texture = tx) %>%
+  plot_3d(heightmap = pop_matrix,
+          zscale = 250 / 4.5,
+          solid = F,
+          shadowdepth = 0)
+
+# Adjusting Camera Angle
+render_camera(theta = 0,
+              phi = 70,
+              zoom = 0.55)
+
+rgl::rglwidget()
+```
+
+
+
+```{r}
+outfile <- glue::glue("Plots/CA_final_2.png")
+
+{
+  start_time <- Sys.time()
+  cat(crayon::cyan(start_time), "\n")
+  if(!file.exists(outfile)) {
+    png::writePNG(matrix(1), target = outfile)
+  }
+  
+  render_highquality(
+    filename = outfile,
+    interactive = F,
+    min_variance =0,
+    lightdirection = 45, #Degree
+    #lightaltitude = c(30, 80),
+    #lightcolor = c(subset_colors[4], "white"),
+    lightcolor = c("white", "white"),  # Set both lights to white
+    lightintensity = c(600, 100),
+    width = 2160,
+    height = 2160)
+  
+  end_time <- Sys.time()
+  diff <- end_time - start_time
+  cat(crayon::cyan(diff), "\n")
+}
+```
+
+```{r}
+# Anotate
+# Install and load the showtext package
+library(showtext)
+library(extrafont)
+library(magick)
+library(colorspace)
+library(scales)
+
+pop_raster <- image_read("Plots/IS_final_2.png")
+
+text_color <- "black"
+swatchplot(text_color)
+
+
+# Automatically enable font support
+showtext_auto()
+
+# Download and register the Philosopher font from Google Fonts
+font_add_google("Philosopher", regular = "400", bold = "700")
+
+pop_raster %>%
+  image_annotate("Iceland",
+                 gravity = "northeast",
+                 location = "+40+30",
+                 color = text_color,
+                 size = 60,
+                 font = "Philosopher",
+                 weight = 700,
+                 # degrees = 0,
+  ) %>%
+  image_annotate("POPULATION DENSITY MAP",
+                 gravity = "northeast",
+                 location = "+40+120",
+                 color = text_color,
+                 size = 15,
+                 font = "Philosopher",  # Corrected font name
+                 weight = 500,
+                 # degrees = 0,
+  ) %>%
+  image_annotate("Visualization by: Babac, Gier, Laspoña, Mugot \nData: Kontur Population 2023",
+                 gravity = "southwest",
+                 location = "+20+20",
+                 color = alpha(text_color, .8),
+                 font = "Philosopher",  # Corrected font name
+                 size = 7,
+                 # degrees = 0,
+  ) %>%
+  image_write("Plots/Annotated_plot_CA.png", format = "png", quality = 100)
+```
