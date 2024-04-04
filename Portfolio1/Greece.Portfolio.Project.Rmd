@@ -59,7 +59,7 @@ print(distinct_names)
 ```
 
 ```{r}
-# Creating BD Boundary
+# Creating GR Boundary
 gr_boundary <- gr_admin %>%
   st_geometry %>%
   st_union %>%
@@ -99,7 +99,7 @@ names(gr_hex)
 ```{r}
 ggplot(gr_hex) + 
   geom_sf(aes(fill = population), color = "gray66", linewidth = 0) + 
-  geom_sf(data = np_boundary, fill = NA, color = "black")
+  geom_sf(data = gr_boundary, fill = NA, linetype = "dashed", color = "black")
 ```
 
 ```{r}
@@ -145,7 +145,7 @@ pop_matrix <- matrix(pop_raster$population,
 
 ```{r}
 # Create color palette from MetBrewer Library
-color <- MetBrewer::met.brewer(name="Greek", direction = -1)
+color <- MetBrewer::met.brewer(name="Paquin", direction = -1)
 
 tx <- grDevices::colorRampPalette(color, bias = 4.5)(256)
 swatchplot(tx)
@@ -161,19 +161,24 @@ pop_matrix %>%
   plot_3d(heightmap = pop_matrix,
           zscale = 250 / 4.5,
           solid = F,
-          shadowdepth = 0,
-          theta = 0,
-          phi = 70,
-          zoom = 0.55
-          )
+          shadowdepth = 0.8)
 
+# Adjusting Camera Angle
+render_camera(theta = 0,
+              phi = 50,
+              zoom = 0.5,
+              fov = 100
+)
+
+
+# To interactively view the 3D plot
 rgl::rglwidget()
 ```
 
 
 
 ```{r}
-outfile <- glue::glue("Plots/NP_final_2.png")
+outfile <- glue::glue("Plots/GR_final_4.png")
 
 {
   start_time <- Sys.time()
@@ -186,16 +191,13 @@ outfile <- glue::glue("Plots/NP_final_2.png")
     filename = outfile,
     #interactive = F,
     lightdirection = 50, #Degree
-    #lightaltitude = c(30, 80),
+    lightaltitude = c(30, 80),
     #lightcolor = c(subset_colors[4], "white"),
     lightcolor = c("white", "white"),  # Set both lights to white
     lightintensity = c(600, 100),
-    width = 1980,
-    height = 1180,
-    #width = 1000,
-    #height = 1400,
+    width = 3375,
+    height = 3375,
     samples = 550
-    #samples = 2
   )
   
   end_time <- Sys.time()
@@ -213,7 +215,7 @@ library(magick)
 library(colorspace)
 library(scales)
 
-pop_raster <- image_read("Plots/NP_final_2.png")
+pop_raster <- image_read("Plots/GR_final_4.png")
 
 text_color <- "black"
 swatchplot(text_color)
@@ -222,16 +224,14 @@ swatchplot(text_color)
 # Automatically enable font support
 showtext_auto()
 
-# Download and register the Philosopher font from Google Fonts
-font_add_google("Philosopher", regular = "400", bold = "700")
 
 pop_raster %>%
-  image_annotate("Nepal",
+  image_annotate("Greece",
                  gravity = "northeast",
                  location = "+50+50",
                  color = text_color,
-                 size = 120,
-                 font = "Philosopher",
+                 size = 150,
+                 font = "Ananda Namaste",
                  weight = 700,
                  # degrees = 0,
   ) %>%
@@ -239,18 +239,18 @@ pop_raster %>%
                  gravity = "northeast",
                  location = "+50+175",
                  color = text_color,
-                 size = 26,
-                 font = "Philosopher",  # Corrected font name
+                 size = 36.5,
+                 font = "FuturaBT-Medium",  # Corrected font name
                  weight = 500,
                  # degrees = 0,
   ) %>%
   image_annotate("Visualization by: Babac, Gier, Laspoña, Mugot \nData: Kontur Population 2023",
                  gravity = "southwest",
                  location = "+20+20",
-                 color = alpha(text_color, .8),
-                 font = "Philosopher",  # Corrected font name
+                 color = alpha(text_color, .6),
+                 font = "FuturaBT-Medium",  # Corrected font name
                  size = 25,
                  # degrees = 0,
   ) %>%
-  image_write("Plots/Annotated_plot_ph.png", format = "png", quality = 100)
+  image_write("Plots/Final_annotated.plot_GR4.png", format = "png", quality = 100)
 ```

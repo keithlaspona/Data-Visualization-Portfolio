@@ -24,7 +24,7 @@ You need to install the necessary packages. Run the following commands
 in your R console. Try to install them one by one, it might require
 restarting the R-session several times.
 
-``` r
+``` {r}
 install.packages("sf", dependencies=TRUE)
 install.packages("tmap", dependencies=TRUE)
 install.packages("mapview", dependencies=TRUE)
@@ -40,7 +40,7 @@ install.packages("magick", dependencies=TRUE)
 
 Load the required libraries and set the RGL options:
 
-``` r
+``` {r}
 options(rgl.useNULL = FALSE)
 require(tidyverse)
 require(sf)
@@ -62,7 +62,7 @@ You'll need to load the population data and administrative boundaries
 for the Philippines, transforming them into a suitable coordinate
 system. The data is downloaded from Kontur Population.
 
-``` r
+``` {r}
 ph_hex <- st_read("data/kontur_population_PH_20231101.gpkg") %>% st_transform(3106)
 ph_admin <- st_read("data/kontur_boundaries_PH_20230628.gpkg") %>% st_transform(3106)
 ```
@@ -73,12 +73,12 @@ Inspect the 'name_en' column and create the boundary for the
 Philippines. Use the filter option to plot specific districts and
 divisions on the map.
 
-``` r
+``` {r}
 distinct_names <- ph_admin %>% distinct(name_en)
 print(distinct_names)
 ```
 
-``` r
+``` {r}
 # Creating BD Boundary
 ph_boundary <- ph_admin %>%
   st_geometry %>%
@@ -91,11 +91,11 @@ ph_boundary <- ph_admin %>%
 
 Visualize the hex data and boundaries to ensure accuracy.
 
-``` r
+``` {r}
 names(ph_hex)
 ```
 
-``` r
+``` {r}
 ggplot(ph_hex) + 
   geom_sf(aes(fill = population), color = "gray66", linewidth = 0) + 
   geom_sf(data = ph_boundary, fill = NA, color = "black")
@@ -106,7 +106,7 @@ ggplot(ph_hex) +
 Determine the aspect ratio for the map based on the bounding box of the
 boundary.
 
-``` r
+``` {r}
 # setting the ph boundary as a bounding box
 bbox <- st_bbox(ph_boundary)
 
@@ -143,7 +143,7 @@ rendering.
 -   To improve the quality of the 3D image when saving, change the
     settings to a higher resolution.
 
-``` r
+``` {r}
 # convert to raster to convert to matrix
 size = 3500
 
@@ -163,7 +163,7 @@ pop_matrix <- matrix(pop_raster$population,
 Select a color palette from the MetBrewer or RColorBrewer library and
 customize it for your map.
 
-``` r
+``` {r}
 # Create color palette from MetBrewer Library
 color <- MetBrewer::met.brewer(name="OKeeffe1", direction = -1)
 
@@ -176,7 +176,7 @@ swatchplot(color)
 
 Use Rayshader to create a 3D representation of the population density.
 
-``` r
+``` {r}
 # Close any existing 3D plot before plotting another
 rgl::close3d()
 
@@ -206,7 +206,7 @@ rgl::rglwidget()
 Fine-tune the camera angle and render a high-quality image of the 3D
 map.
 
-``` r
+``` {r}
 outfile <- glue::glue("Plots/Ph_final_2.png")
 
 {
@@ -243,7 +243,7 @@ outfile <- glue::glue("Plots/Ph_final_2.png")
 
 You can add names and more details about your generated visualization.
 
-``` r
+``` {r}
 # ---------------------------Anotate
 # Install and load the showtext package
 install.packages("showtext")
