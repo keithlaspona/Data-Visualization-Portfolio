@@ -1,0 +1,65 @@
+---
+title: |
+  | DS221
+  | Data Visualization and Storytelling
+subtitle: |
+  | --------------------------------------------------
+  | PORTFOLIO 1
+  | --------------------------------------------------
+output: pdf_document
+header-includes:
+  - "\\usepackage{titling}"
+  - "\\pretitle{\\begin{center}\\LARGE\\includegraphics[width=4cm]{logo.jpg}\\\\[\\bigskipamount]}"
+  - "\\posttitle{\\end{center}}"
+editor_options: 
+  markdown: 
+---
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
